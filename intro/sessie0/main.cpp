@@ -62,14 +62,14 @@ int main(int argc, const char** argv){
     cvtColor(image1,kleurGW, COLOR_RGB2GRAY);
     imshow("",kleurGW);
     std::cout << kleurGW.type() << std::endl;
-    //for( int i = 0; i < kleurGW.rows; ++i)
-    //{
-    //    for ( int j = 0; j < kleurGW.cols; ++j)
-    //    {
-    //        std::cout << (int)kleurGW.at<uchar>(i,j);
-    //    }
-    //    std::cout << std::endl;
-    //}
+    for( int i = 0; i < kleurGW.rows; ++i)
+    {
+        for ( int j = 0; j < kleurGW.cols; ++j)
+        {
+            std::cout << (int)kleurGW.at<uchar>(i,j);
+        }
+        std::cout << std::endl;
+    }
     waitKey();
     circle(canvas, Point(100,100), 50, Scalar(0, 255, 0),6);
     rectangle(canvas, Point(130,120), Point(160,230), Scalar(125,125,0),5, LINE_4);
