@@ -49,6 +49,9 @@ int main(int argc, const char** argv){
         imshow("",image2);
         waitKey();
     }
+    if(! image1.data ) {
+        return -1;
+    }
     split(image1,imageBGR);
     imwrite("b.png",imageBGR[0]);
     imwrite("g.png",imageBGR[1]);
