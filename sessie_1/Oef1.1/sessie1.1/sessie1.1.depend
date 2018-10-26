@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1540538509 source:/home/student/Github/opencv/Beeldinterpretatie_Michiels_Jonas/sessie_1/Oef1.1/sessie1.1/main.cpp
+	<iostream>
+	<opencv2/opencv.hpp>
+
