@@ -5,8 +5,10 @@ using namespace cv;
 int main(int argc, const char** argv){
     string img1_loc = "imageColor.jpg";
     string img2_loc = "imageBimodal.jpg";
+    string img3_loc = "imageColorAdapted.jpg";
     cerr << img1_loc << endl;
     cerr << img2_loc << endl;
+    cerr << img3_loc << endl;
     Mat image1;
     Mat image2;
     Mat image2eq;
@@ -14,7 +16,7 @@ int main(int argc, const char** argv){
     vector<Mat> imageBGR;
     image1 = imread(img1_loc, CV_LOAD_IMAGE_COLOR);
     image2 = imread(img2_loc, CV_LOAD_IMAGE_GRAYSCALE);
-
+    image2 = imread(img3_loc, CV_LOAD_IMAGE_COLOR);
     Mat filter = Mat::zeros(image1.rows,image1.cols, CV_8UC1);
     Mat filter2 = Mat::zeros(image1.rows,image1.cols, CV_8UC1);
     Mat imageOT = Mat::zeros(image2.rows,image2.cols, CV_8UC1);
