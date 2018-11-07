@@ -3,12 +3,10 @@
 using namespace std;
 using namespace cv;
 int main(int argc, const char** argv){
-    string img1_loc = "imageColor.jpg";
-    string img2_loc = "imageBimodal.jpg";
-    string img3_loc = "imageColorAdapted.jpg";
+    string img1_loc("imageColor.jpg");
+    string img2_loc("imageBimodal.jpg");
     cerr << img1_loc << endl;
     cerr << img2_loc << endl;
-    cerr << img3_loc << endl;
     Mat image1;
     Mat image2;
     Mat image2eq;
@@ -16,7 +14,6 @@ int main(int argc, const char** argv){
     vector<Mat> imageBGR;
     image1 = imread(img1_loc, CV_LOAD_IMAGE_COLOR);
     image2 = imread(img2_loc, CV_LOAD_IMAGE_GRAYSCALE);
-    image2 = imread(img3_loc, CV_LOAD_IMAGE_COLOR);
     Mat filter = Mat::zeros(image1.rows,image1.cols, CV_8UC1);
     Mat filter2 = Mat::zeros(image1.rows,image1.cols, CV_8UC1);
     Mat imageOT = Mat::zeros(image2.rows,image2.cols, CV_8UC1);
@@ -55,29 +52,31 @@ int main(int argc, const char** argv){
     }
     filter2 = (R>95) & (G>40) & (B>20) & ((max(R,max(G,B)) - min(R,min(G,B)))>15) & (abs(R-G)>15) & (R>G) & (R>B);
     filter2 = filter2*255;
-    imshow("",filter);
+    imshow("filter",filter);
     waitKey();
-    imshow("",filter2);
+    imshow("filter2",filter2);
     waitKey();
-    imshow("",image2);
-    waitKey();
+    if(!image2.empty()){
+         imshow("",image2);
+         waitKey();
+    }
     threshold(image2, imageOT, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-    imshow("",imageOT); //Rechterkant wordt zwart
+    imshow("OTSU",imageOT); //Rechterkant wordt zwart
     waitKey();
     equalizeHist(image2,image2eq);
-    imshow("",image2eq);
+    imshow("HE",image2eq);
     waitKey();
     threshold(image2eq, imageOTeq, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-    imshow("",imageOTeq); //Rechterkant wordt zwart
+    imshow("OTHE",imageOTeq); //Rechterkant wordt zwart
     waitKey();
     Ptr <CLAHE> clahe_pointer = createCLAHE();
     clahe_pointer->setTilesGridSize(Size(15,15));
     clahe_pointer->setClipLimit(1);
     clahe_pointer->apply(image2.clone(), imageCLAHE);
-    imshow("",imageCLAHE);
+    imshow("CLAHE",imageCLAHE);
     waitKey();
     threshold(imageCLAHE, imageOTCLAHE, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-    imshow("",imageOTCLAHE);
+    imshow("OTCLAHE",imageOTCLAHE);
     waitKey();
     return 0;
 }
