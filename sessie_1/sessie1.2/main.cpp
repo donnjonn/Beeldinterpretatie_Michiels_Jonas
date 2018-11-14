@@ -67,7 +67,7 @@ int main(int argc, const char** argv){
     findContours(close1,contours,hierarchy,CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
     convexHull(contours,hull,true,true);
     drawContours(contour,hull,-1,255);
-    imshow("contours",contour);
+    //imshow("contours",contour);
     waitKey();
     return 0;
 }

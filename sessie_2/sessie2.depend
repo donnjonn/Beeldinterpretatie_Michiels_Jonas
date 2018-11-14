@@ -1,9 +1,9 @@
 # depslib dependency file v1.0
-1541748331 source:/home/student/Documents/testproject/sessie3/main.cpp
+1542207161 source:c:\users\donjon\documents\beeldverwerking\beeldinterpretatie_michiels_jonas\testp\main.cpp
 	<iostream>
 	<opencv2/opencv.hpp>
 
-1541754462 source:/home/student/Github/opencv/Beeldinterpretatie_Michiels_Jonas/sessie_2/main.cpp
+1542207511 source:c:\users\donjon\documents\beeldverwerking\beeldinterpretatie_michiels_jonas\sessie_2\main.cpp
 	<iostream>
 	<opencv2/opencv.hpp>
 

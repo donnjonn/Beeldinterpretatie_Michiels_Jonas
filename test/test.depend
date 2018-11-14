@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1540245339 source:c:\users\donjon\documents\test\test\main.cpp
+	<opencv2/core/core.hpp>
+	<opencv2/highgui.hpp>
+	<iostream>
+
+1540241739 source:c:\users\donjon\documents\beeldverwerking\beeldinterpretatie_michiels_jonas\test\main.cpp
+	<opencv2/core/core.hpp>
+	<opencv2/highgui.hpp>
+	<iostream>
+
