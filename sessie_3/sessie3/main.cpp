@@ -4,32 +4,10 @@
 using namespace std;
 using namespace cv;
 
-void maxLocs(const Mat& src, queue<Point>& dst, size_t size)
-{
-    float maxValue = -1.0f * numeric_limits<float>::max();
-    float* srcData = reinterpret_cast<float*>(src.data);
 
-    for(int i = 0; i < src.rows; i++)
-    {
-        for(int j = 0; j < src.cols; j++)
-        {
-            if(srcData[i*src.cols + j] > maxValue)
-            {
-                maxValue = srcData[i*src.cols + j];
-
-                dst.push(Point(j, i));
-
-                // pop the smaller one off the end if we reach the size threshold.
-                if(dst.size() > size)
-                {
-                    dst.pop();
-                }
-            }
-        }
-    }
-}
 
 Mat image; Mat templ; Mat result;
+Point center;
 char* image_window = "Source Image";
 char* result_window = "Result window";
 
@@ -57,13 +35,64 @@ const string keys =
     namedWindow( result_window, CV_WINDOW_AUTOSIZE );
     char* trackbar_label = "Method: \n 0: SQDIFF \n 1: SQDIFF NORMED \n 2: TM CCORR \n 3: TM CCORR NORMED \n 4: TM COEFF \n 5: TM COEFF NORMED";
     createTrackbar( trackbar_label, image_window, &match_method, max_Trackbar, MatchingMethod );
+    center.x = input_image.cols / 2;
+    center.y = input_image.rows / 2;
     MatchingMethod(0,0);
     waitKey(0);
     return 0;
 }
+vector<vector<Point> > match(Mat input_image)
+{
+    Mat result;
+    matchTemplate(input_image, templ, result, match_method);
+//    normalize(result, result, 0, 1, NORM_MINMAX, -1, Mat());
 
+    if (match_method == TM_SQDIFF || match_method == TM_SQDIFF_NORMED)
+        result = 1 - result;
+
+//    double maxVal;
+//    minMaxLoc(result, NULL, &maxVal);
+    Mat mask = Mat::zeros(Size(input_image.cols, input_image.rows), CV_8UC1);
+    inRange(result, ((double)threshold_percent/100.0), 1, mask);
+
+    vector<vector<Point> > corners;
+    vector<vector<Point> > contours;
+    findContours(mask, contours, CV_RETR_EXTERNAL, CHAIN_APPROX_NONE);
+    for (int i = 0; i < contours.size(); ++i)
+    {
+        vector<Point> hull;
+        convexHull(contours[i], hull);
+        Rect rect = boundingRect(hull);
+//        rectangle(mask, rect.tl(), rect.br(), Scalar::all(50), 2, 8, 0);
+
+        Point loc;
+        minMaxLoc(result(rect), NULL, NULL, NULL, &loc);
+
+        Point c(loc.x + rect.x, loc.y + rect.y);
+
+        vector<Point> points;
+        points.push_back(c);
+        points.push_back(c + Point(0, templ.rows));
+        points.push_back(c + Point(templ.cols, templ.rows));
+        points.push_back(c + Point(templ.cols, 0));
+        corners.push_back(points);
+    }
+
+//    imshow("Mask", mask);
+//    imshow("Image display", img_display);
+//    imshow("Result", result);
+
+    return corners;
+}
 void MatchingMethod( int, void* )
 {
+    Mat img_display(image.clone());
+    vector<vector<Point> > corners = match(img_display);
+    for (int i = 0; i < corners.size(); ++i)
+        rectangle(img_display, corners[i][0], corners[i][2], Scalar::all(0));
+    imshow("Image display", img_display);
+    return;
+    /*Mat output(input_image.clone());
     /// Source image to display
     Mat img_display;
     image.copyTo( img_display );
@@ -100,6 +129,6 @@ void MatchingMethod( int, void* )
     imshow( image_window, img_display );
     imshow( result_window, result );
 
-    return;
+    return;*/
 }
 
