@@ -1,8 +1,5 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
-#define KERNEL_SIZE 5
-#define CIRCLE_THICKNESS -1
-#define CIRCLE_RADIUS 5
 
 using namespace std;
 using namespace cv;
@@ -165,7 +162,7 @@ void SVM(Mat data, Mat labels) {
 int main(int argc, const char** argv) {
     CommandLineParser parser(argc, argv,
                              "{ help h usage ? | | Shows this message.}"
-                             "{ strawberry s   | | Loads a strawberry image <REQUIRED> }"
+                             "{ strawberry s   | | Aardbei afbeelding }"
     );
     string strawberry(parser.get<string>("s"));
     img = imread(strawberry, CV_LOAD_IMAGE_COLOR);

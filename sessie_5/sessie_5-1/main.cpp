@@ -4,9 +4,6 @@
 using namespace std;
 using namespace cv;
 
-#define KERNEL_SIZE 5
-#define CIRCLE_THICKNESS -1
-#define CIRCLE_RADIUS 5
 vector<Point2d> points;
 Mat img;
 void CallBack(int event, int x, int y, int flags, void* userdata) {
@@ -26,7 +23,7 @@ void CallBack(int event, int x, int y, int flags, void* userdata) {
     }
     Mat result = img.clone();
     for(int i=0; i < points.size(); i++) {
-        circle(result, points.at(i), CIRCLE_RADIUS, Scalar(0, 255, 0), CIRCLE_THICKNESS);
+        circle(result, points.at(i), 5, Scalar(0, 255, 0), -1);
     }
     imshow("Aardbei", result);
 }
@@ -35,7 +32,7 @@ void CallBack(int event, int x, int y, int flags, void* userdata) {
 int main(int argc, const char** argv) {
     CommandLineParser parser(argc, argv,
                              "{ help h usage ? | | Shows this message.}"
-                             "{ strawberry s   | | Loads a strawberry image <REQUIRED> }"
+                             "{ strawberry s   | | Aardbei afbeelding}"
     );
     string strawberry(parser.get<string>("s"));
     img = imread(strawberry, CV_LOAD_IMAGE_COLOR);
