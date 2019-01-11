@@ -38,6 +38,7 @@
 			<Add option="--verbose" />
 		</Compiler>
 		<Unit filename="main.cpp" />
+		<Unit filename="plot.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

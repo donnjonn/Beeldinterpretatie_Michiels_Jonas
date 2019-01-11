@@ -7,10 +7,14 @@
 #define LENGTE 4
 #define SOORTEN 3
 #define STARTAANT 55
+#define SCHILDR 22
+#define SCHILDG 214
+#define SCHILDB 31
 using namespace std;
 using namespace cv;
-void detectAndDisplayscore( Mat frame);
-void detectAndDisplayaliens(Mat frame);
+void detectscore(Mat frame);
+void detectaliens(Mat frame);
+void detectshield(Mat frame);
 void sorter();
 CascadeClassifier face_cascade;
 int eerst = 0;
@@ -18,6 +22,7 @@ double duration;
 double snelheid;
 std::clock_t start;
 Mat score;
+Mat schild;
 Mat temps[10];
 Mat aliens[6];
 Mat tempsbin[10];
@@ -26,7 +31,10 @@ Mat results[10];
 Mat resultsa[3];
 Mat snelheidv(50, 500, CV_8UC3, Scalar(0, 0, 0));
 Mat alienv(100, 500, CV_8UC3, Scalar(0, 0, 0));
+Mat schildv(50, 500, CV_8UC3, Scalar(0, 0, 0));
+Mat totaalv(200, 500, CV_8UC3, Scalar(0, 0, 0));
 Point matchLoc;
+Point matchLoc2;
 int fc = 0;
 int counter;
 int gloc[LENGTE] = {};
@@ -35,10 +43,16 @@ Point pa[LENGTE] = {};
 int cijfers[LENGTE] = {};
 int tellers[SOORTEN] = {};
 int totaal;
+int schildpixels;
+int schildmax;
+int schildteller;
 int aloc[SOORTEN] = {};
 int aval[SOORTEN] = {};
+float percentage = 100;
+//std::vector<int> aliendata;
 int main( int argc, const char** argv )
 {
+    cerr << "test" << endl;
     CommandLineParser parser(argc, argv,
                              "{help h||}"
                              "{gameplay g| |path to gameplay footage}"
@@ -64,10 +78,10 @@ int main( int argc, const char** argv )
     aliens[4] = imread("alien3a.png", CV_LOAD_IMAGE_GRAYSCALE);
     aliens[5] = imread("alien3b.png", CV_LOAD_IMAGE_GRAYSCALE);
     for(int i=0;i<SOORTEN*2;i++){
-        resize(aliens[i],aliens[i],{0,0},0.5,0.5,INTER_NEAREST);
+        resize(aliens[i],aliens[i],{0,0},0.50,0.50,INTER_NEAREST);
     }
     score = imread("scorebegin.png", CV_LOAD_IMAGE_GRAYSCALE);
-
+    schild = imread("schildbegin.png", CV_LOAD_IMAGE_COLOR);
     /*imshow("een",een);
     imshow("twee",twee);
     imshow("drie",drie);
@@ -85,13 +99,15 @@ int main( int argc, const char** argv )
         cout << "--(!)Error opening video capture\n";
         return -1;
     }
-    vector<Point> trackers;
     Mat frame;
     for(int j = 0;j<10;j++){
         threshold(temps[j],tempsbin[j],100,255,THRESH_BINARY);
         //imshow(string("tempbin"+j),tempsbin[j]);
     }
-
+    /*for(int j = 0;j<SOORTEN*2;j++){
+        threshold(aliens[j],aliens[j],100,255,THRESH_BINARY);
+        //imshow(string("tempbin"+j),tempsbin[j]);
+    }*/
     start = std::clock();
     while ( capture.read(frame) )
     {
@@ -101,22 +117,26 @@ int main( int argc, const char** argv )
             cout << "--(!) No captured frame -- Break!\n";
             break;
         }
-        cvtColor(frame, frame, COLOR_RGB2GRAY);
+        Mat framebw;
+        cvtColor(frame, framebw, COLOR_RGB2GRAY);
         //resize(frame, frame, Size(SCALE*frame.cols, SCALE*frame.rows));
-        detectAndDisplayscore(frame);
-        resize(frame,frame,{0,0},0.5,0.5,INTER_NEAREST);
-        detectAndDisplayaliens(frame);
-        //imshow("video", frame);
+        detectscore(framebw);
+        if(fc%10==0){
+            resize(framebw,framebw,{0,0},0.50,0.50,INTER_NEAREST);
+            detectaliens(framebw);
+        }
+        detectshield(frame);
+        imshow("Space Invaders", frame);
         if( waitKey(10) == 27 )
         {
             break; // escape
         }
+        fc++;
     }
 
     return 0;
 }
-void detectAndDisplayscore( Mat frame)
-{
+void detectscore( Mat frame){
     //waitKey();
     memset(cijfers, 0, sizeof(cijfers));
     memset(gval, 0, sizeof(gval));
@@ -124,7 +144,7 @@ void detectAndDisplayscore( Mat frame)
     memset(pa, 0, sizeof(pa));
     Mat img;
     Mat onlycheckbin = Mat::zeros(Size(score.cols, score.rows), CV_32FC1);
-    if(eerst == 0){
+    if(fc == 0){
         //imwrite("still.png",frame);
         //cout << "eerst";
         img = frame.clone();
@@ -165,15 +185,13 @@ void detectAndDisplayscore( Mat frame)
             contours.clear();
             //Mat drawing = Mat::zeros( maskc.size(), CV_8UC3 );
             findContours(maskc, contours,hierarchy, CV_RETR_EXTERNAL, CHAIN_APPROX_NONE);
-
             //imshow("conts", drawing);
             Mat res = results[j];
             //cout << "size: "<<contours.size() << endl;
             //cout << "i: "<< i<< endl;
             //cout<<"j: "<<j<<endl;
             //cout << "contours.size: "<<contours.size()<<endl;
-            for (int i = 0; i < (int)contours.size(); ++i)
-            {
+            for (int i = 0; i < (int)contours.size(); ++i){
                 //drawContours( drawing, contours, i, Scalar(0, 0, 255), 2, 8, hierarchy, 0, Point() );
                 double val = 0;
                 //cout << "getal: "<<j<<endl;
@@ -235,7 +253,6 @@ void detectAndDisplayscore( Mat frame)
         for(int r=0;r<LENGTE;r++){
                 //cout<<"xloc: "<< gloc[r] <<endl;
                 rectangle(img, pa[r], Point(pa[r].x + temps[0].cols, pa[r].y + temps[0].rows), 255);
-
                 //cout << "getal "<<r<<": "<< cijfers[r]<<endl;
         }
     }
@@ -245,19 +262,16 @@ void detectAndDisplayscore( Mat frame)
         score = 10 * score + cijfers[i];
     //cout << "score: "<< score << endl;
     if(fc%5==0){
-        snelheidv = Scalar(0,0,0);
+        totaalv(Rect(0,0,500,50)) = Scalar(0,0,0);
         duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
         snelheid = (float)score/duration;
         //cout<<"snelheid: "<<snelheid<<endl;
         string snelheids(to_string(snelheid));
-        putText(snelheidv, snelheids + "punten/s", Point(10,40),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
-        imshow("snelheid",snelheidv);
+        putText(totaalv, snelheids + "punten/s", Point(10,40),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+        imshow("statistieken",totaalv);
     }
-    fc++;
-    eerst = 1;
-    imshow("Voetganger detection", img);
 }
-void detectAndDisplayaliens(Mat frame){
+void detectaliens(Mat frame){
     totaal = 0;
     //cout << "hier"<<endl;
     memset(tellers, 0, sizeof(tellers));
@@ -267,7 +281,7 @@ void detectAndDisplayaliens(Mat frame){
     Mat img;
     Point minLoc; Point maxLoc;
     img = frame.clone();
-
+    //threshold(img,img,100,255,THRESH_BINARY);
     minLoc = {};
     maxLoc = {};
 
@@ -292,27 +306,72 @@ void detectAndDisplayaliens(Mat frame){
             findContours(masktot, contours,hierarchy, CV_RETR_EXTERNAL, CHAIN_APPROX_NONE);
             tellers[j] = contours.size();
     }
-
     //cout << "aliens: ";
     for(int i=0;i<SOORTEN;i++){
             //cout << tellers[i]<<endl;
             totaal += tellers[i];
     }
     //cout<<endl;
-    alienv = Scalar(0,0,0);
+    totaalv(Rect(0,50,500,100)) = Scalar(0,0,0);
+    /*if(fc%10==0){
+        //aliendata.push_back(STARTAANT-totaal);
+    }*/
     string totaald(to_string(STARTAANT-totaal));
     string totaall(to_string(totaal));
-    putText(alienv, totaald + " gedood", Point(10,40),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
-    putText(alienv, totaall + " over", Point(10,80),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
-    imshow("gedood",alienv);
-
+    putText(totaalv, totaald + " gedood", Point(10,90),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    putText(totaalv, totaall + " over", Point(10,140),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    imshow("statistieken",totaalv);
+}
+void detectshield(Mat frame){
+    Mat img;
+    schildpixels = 0;
+    img = frame.clone();
+    if(fc==0){
+        double maxv, minv;
+        Point minLoc; Point maxLoc;
+        Mat result;
+        matchTemplate(frame, schild, result, CV_TM_CCOEFF);
+        normalize( result, result, 0, 1, NORM_MINMAX, -1, Mat() );
+        minMaxLoc(result, &minv, &maxv, &minLoc,&maxLoc,Mat());
+        matchLoc2 = maxLoc;
+        schildteller = 0;
+    }
+    Mat onlycheck = img(Rect(matchLoc2.x,matchLoc2.y,schild.cols,schild.rows));
+    for(int x = 0; x<schild.cols; x++){
+        for(int y = 0; y<schild.rows; y++){
+            //cout << "in for" << endl;
+            Vec3b colour = onlycheck.at<Vec3b>(Point(x, y));
+            if(colour.val[1]>120){
+                //cout << "in if" << endl;
+                schildpixels++;
+            }
+        }
+    }
+    schildmax = max(schildmax,schildpixels);
+    schildteller += schildpixels;
+    if(fc%30==0){
+        int schildgem = 0;
+        if(eerst==0){
+            schildgem = schildteller;
+        }
+        else{
+            schildgem = (float)schildteller/30.0;
+        }
+        totaalv(Rect(0,150,500,50)) = Scalar(0,0,0);
+        percentage=min(float(100.0),(float)schildgem/(float)schildmax*100);
+        string perc;
+        perc = to_string(percentage);
+        eerst = 1;
+        putText(totaalv, "schild: " + perc + "%", Point(10,190),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+        imshow("statistieken",totaalv);
+        schildteller = 0;
+    }
 }
 void sorter(){
     int temploc;
     int tempc;
     for(int i = 0; i<LENGTE-1;i++){
         for(int j = 1;j+i<LENGTE;j++){
-
             if(gloc[i]>gloc[i+j]){
                 temploc = gloc[i];
                 tempc = cijfers[i];
