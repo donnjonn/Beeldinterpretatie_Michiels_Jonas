@@ -12,45 +12,43 @@
 #define SCHILDB 31
 using namespace std;
 using namespace cv;
+
 void detectscore(Mat framef,Mat frame);
 void detectaliens(Mat frame);
 void detectshield(Mat frame);
 void sorter();
 void drawgraph(int offset, double f, int scalef);
-CascadeClassifier face_cascade;
-int eerst = 0;
-double duration;
-double snelheid;
+
+double duration; //tijd voorbij
+double snelheid; //punten/sec
 std::clock_t start;
-Mat score;
-Mat schild;
-Mat temps[10];
-Mat aliens[6];
-Mat tempsbin[10];
-Mat result;
-Mat results[10];
-Mat resultsa[3];
-Mat totaalv(700, 1680, CV_8UC3, Scalar(0, 0, 0));
-Point puntprev[3];
-Point puntnu;
-Point matchLoc;
-Point matchLoc2;
-int fc = 0;
-int xvar[3]={0,0,0};
-int counter;
-int gloc[LENGTE] = {};
-double gval[LENGTE] = {};
-Point pa[LENGTE] = {};
-int cijfers[LENGTE] = {};
-int tellers[SOORTEN] = {};
-int totaal;
-int totaalteller=55*3;
-int schildpixels;
-int schildmax;
-int schildteller;
-int aloc[SOORTEN] = {};
-int aval[SOORTEN] = {};
-float percentage = 100;
+Mat score; //template voor scoreregio
+Mat schild; //template voor schildregio
+Mat temps[10]; //templates voor cijfers
+Mat tempsbin[10]; //binaire conversie van cijfer templates (performance increase)
+Mat aliens[6]; //templates voor aliens: 0&1 alien 1; 2&3 alien 2; 4&5 alien 6
+Mat result; //resultaat van template matching van de scoreregio
+Mat results[10]; //resultaten van de templatematching van cijfers
+Mat resultsa[3]; //resultaten van templatematching van aliens
+Mat totaalv(700, 1680, CV_8UC3, Scalar(0, 0, 0)); //statistiekeen
+Point puntprev[3];//vorig punt (per onderdeel vd statistieken)
+Point puntnu;//huidig punt (bij elke statistiek geupdate
+Point matchLoc; //match locaie voor score regio
+Point matchLoc2; //matchl locatie voor schilden regio
+int fc = 0; //framecounter
+int xvar[3]={0,0,0}; //variabele die grafieken niet laat overflowen op volgend egrafiek
+int counter; //teller voor aantal gevonden cijfer matches
+int gloc[LENGTE] = {}; //locatie van het maximum binnen elke cijfermatch(rect)
+double gval[LENGTE] = {}; //waarde van elke geaccepteerde cijfermatch
+Point pa[LENGTE] = {}; //locatie van elke cijfermatch in heel de frame
+int cijfers[LENGTE] = {}; //gevonden cijfers
+int tellers[SOORTEN] = {}; //teller per soort alien
+int totaal; //alle aliens samengeteld
+int totaalteller=55*3; //alle aliens samengeteld per drie frames
+int schildpixels; //aantal pixels groene tinten(schild)
+int schildmax; //maximaal aantal pixels groene tinten
+int schildteller; //aantal groene tinten pixels samengeteld per 30 frames
+float percentage = 100; //percentage schild
 std::vector<int> aliendata;
 int main( int argc, const char** argv ){
     cerr << "test" << endl;
@@ -241,8 +239,6 @@ void detectscore(Mat framef, Mat frame){
 void detectaliens(Mat frame){
     totaal = 0;
     memset(tellers, 0, sizeof(tellers));
-    memset(aval, 0, sizeof(aval));
-    memset(aloc, 0, sizeof(aloc));
     memset(pa, 0, sizeof(pa));
     Mat img;
     Point minLoc; Point maxLoc;
@@ -311,7 +307,7 @@ void detectshield(Mat frame){
     schildteller += schildpixels;
     if(fc%30==0){
         int schildgem = 0;
-        if(eerst==0){
+        if(fc==0){
             schildgem = schildteller;
         }
         else{
@@ -321,7 +317,6 @@ void detectshield(Mat frame){
         percentage=min(float(100.0),(float)schildgem/(float)schildmax*100);
         string perc;
         perc = to_string(percentage);
-        eerst = 1;
         putText(totaalv, "schild: " + perc + "%", Point(1190,40),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
         imshow("statistieken",totaalv);
         schildteller = 0;
