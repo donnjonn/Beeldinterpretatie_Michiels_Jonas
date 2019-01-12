@@ -13,52 +13,40 @@
 using namespace std;
 using namespace cv;
 
-void detectscore(Mat framef,Mat frame);
-void detectaliens(Mat frame);
-void detectshield(Mat frame);
-void sorter();
-void drawgraph(int offset, double f, int scalef);
+///functie-declaraties
+void detectscore(Mat framef,Mat frame, std::clock_t start, Mat score, Mat tempsbin[]); // Detecteer huidige score + bereken snelheid
+void detectaliens(Mat frame, Mat aliens[]); //tel aantal aliens
+void detectshield(Mat frame, Mat schild); //tel schildpixels (groene tinten)
+void sorter(int gloc[], int cijfers[]); //Sorteert gevonden cijfers volgens de volgorde op scherm
+void drawgraph(int offset, double f, int scalef); //Tekent grafieken + gevonden waardes op totaalv
 
-double duration; //tijd voorbij
-double snelheid; //punten/sec
-std::clock_t start;
-Mat score; //template voor scoreregio
-Mat schild; //template voor schildregio
-Mat temps[10]; //templates voor cijfers
-Mat tempsbin[10]; //binaire conversie van cijfer templates (performance increase)
-Mat aliens[6]; //templates voor aliens: 0&1 alien 1; 2&3 alien 2; 4&5 alien 6
-Mat result; //resultaat van template matching van de scoreregio
-Mat results[10]; //resultaten van de templatematching van cijfers
-Mat resultsa[3]; //resultaten van templatematching van aliens
-Mat totaalv(700, 1680, CV_8UC3, Scalar(0, 0, 0)); //statistiekeen
-Point puntprev[3];//vorig punt (per onderdeel vd statistieken)
-Point puntnu;//huidig punt (bij elke statistiek geupdate
-Point matchLoc; //match locaie voor score regio
-Point matchLoc2; //matchl locatie voor schilden regio
-int fc = 0; //framecounter
-int xvar[3]={0,0,0}; //variabele die grafieken niet laat overflowen op volgend egrafiek
-int counter; //teller voor aantal gevonden cijfer matches
-int gloc[LENGTE] = {}; //locatie van het maximum binnen elke cijfermatch(rect)
-double gval[LENGTE] = {}; //waarde van elke geaccepteerde cijfermatch
-Point pa[LENGTE] = {}; //locatie van elke cijfermatch in heel de frame
-int cijfers[LENGTE] = {}; //gevonden cijfers
-int tellers[SOORTEN] = {}; //teller per soort alien
-int totaal; //alle aliens samengeteld
+///globals scoredetectie
+Point matchLoc; //match locatie voor score regio
+
+///globals aliendetectie
 int totaalteller=55*3; //alle aliens samengeteld per drie frames
-int schildpixels; //aantal pixels groene tinten(schild)
+
+///globals schilddetectie
+Point matchLoc2; //matchl locatie voor schilden regio
 int schildmax; //maximaal aantal pixels groene tinten
 int schildteller; //aantal groene tinten pixels samengeteld per 30 frames
 float percentage = 100; //percentage schild
-std::vector<int> aliendata;
-int main( int argc, const char** argv ){
-    cerr << "test" << endl;
+
+///globals verwerking
+int fc = 0; //framecounter
+Mat totaalv(700, 1680, CV_8UC3, Scalar(0, 0, 0)); //statistieken
+Point puntprev[3];//vorig punt (per onderdeel vd statistieken)
+int xvar[3]={0,0,0}; //variabele die grafieken niet laat overflowen op volgende grafiek
+
+int main(int argc, const char** argv){
     CommandLineParser parser(argc, argv,
                              "{help h||}"
                              "{gameplay g| |path to gameplay footage}"
                              );
-    VideoCapture capture;
-    string gp_loc(parser.get<string>("g"));
-    cerr << gp_loc << endl;
+    Mat frame;
+    Mat score = imread("scorebegin.png", CV_LOAD_IMAGE_GRAYSCALE);//template voor scoreregio
+    Mat schild = imread("schildbegin.png", CV_LOAD_IMAGE_COLOR);//template voor schildregio
+    Mat temps[10]; //templates voor cijfers
     temps[0] = imread("zero.png", CV_LOAD_IMAGE_GRAYSCALE);
     temps[1] = imread("een.png", CV_LOAD_IMAGE_GRAYSCALE);
     temps[2] = imread("twee.png", CV_LOAD_IMAGE_GRAYSCALE);
@@ -69,6 +57,11 @@ int main( int argc, const char** argv ){
     temps[7] = imread("zeven.png", CV_LOAD_IMAGE_GRAYSCALE);
     temps[8] = imread("acht.png", CV_LOAD_IMAGE_GRAYSCALE);
     temps[9] = imread("negen.png", CV_LOAD_IMAGE_GRAYSCALE);
+    Mat tempsbin[10]; //binaire conversie van cijfer templates (performance increase)
+    for(int j = 0;j<10;j++){
+        threshold(temps[j],tempsbin[j],100,255,THRESH_BINARY);
+    }
+    Mat aliens[6]; //templates voor aliens: 0&1 alien 1; 2&3 alien 2; 4&5 alien 6
     aliens[0] = imread("alien1a.png", CV_LOAD_IMAGE_GRAYSCALE);
     aliens[1] = imread("alien1b.png", CV_LOAD_IMAGE_GRAYSCALE);
     aliens[2] = imread("alien2a.png", CV_LOAD_IMAGE_GRAYSCALE);
@@ -76,20 +69,18 @@ int main( int argc, const char** argv ){
     aliens[4] = imread("alien3a.png", CV_LOAD_IMAGE_GRAYSCALE);
     aliens[5] = imread("alien3b.png", CV_LOAD_IMAGE_GRAYSCALE);
     for(int i=0;i<SOORTEN*2;i++){
-        resize(aliens[i],aliens[i],{0,0},0.5,0.5,INTER_NEAREST);
+        resize(aliens[i],aliens[i],{0,0},0.5,0.5,INTER_NEAREST); //Resize voor performance increase
     }
-    score = imread("scorebegin.png", CV_LOAD_IMAGE_GRAYSCALE);
-    schild = imread("schildbegin.png", CV_LOAD_IMAGE_COLOR);
+    VideoCapture capture;
+    string gp_loc(parser.get<string>("g"));
+    cerr << gp_loc << endl;
     capture.open(gp_loc);
-    if ( ! capture.isOpened() )
-    {
-        cout << "--(!)Error opening video capture\n";
+    if ( ! capture.isOpened() ){
+        cout << "Probleem bij het openen van de video";
         return -1;
     }
-    Mat frame;
-    for(int j = 0;j<10;j++){
-        threshold(temps[j],tempsbin[j],100,255,THRESH_BINARY);
-    }
+
+    ///Initialiseren van assen en waardes voor grafieken
     line(totaalv,Point(60,700),Point(60,100),Scalar(0,255,0),2);
     putText(totaalv, "5", Point(5,565),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
     putText(totaalv, "10", Point(5,415),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
@@ -106,45 +97,53 @@ int main( int argc, const char** argv ){
     putText(totaalv, "40%", Point(1125,475),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
     putText(totaalv, "60%", Point(1125,355),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
     putText(totaalv, "80%", Point(1125,235),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
-    start = std::clock();
-    while ( capture.read(frame) )
-    {
-        if( frame.empty() )
-        {
+
+    ///Begin inlezen video
+    std::clock_t start = std::clock();
+    while ( capture.read(frame) ){
+        if( frame.empty() ){
             cout << "--(!) No captured frame -- Break!\n";
             break;
         }
         Mat framebw;
-        cvtColor(frame, framebw, COLOR_RGB2GRAY);
-        detectscore(framebw,frame);
+        cvtColor(frame, framebw, COLOR_RGB2GRAY); // Converteer naar b&w voor performance increase
+        detectscore(framebw,frame,start,score,tempsbin);
         if(fc%10==0){
-            resize(framebw,framebw,{0,0},0.5,0.5,INTER_NEAREST);
-            detectaliens(framebw);
+            resize(framebw,framebw,{0,0},0.5,0.5,INTER_NEAREST);//Resize frame voor performance increase
+            detectaliens(framebw, aliens);
         }
-        detectshield(frame);
+        detectshield(frame,schild);
         imshow("Space Invaders", frame);
-        if( waitKey(10) == 27 )
-        {
+        if( waitKey(10) == 27 ){
             break;
         }
         fc++;
     }
     return 0;
 }
-void detectscore(Mat framef, Mat frame){
+void detectscore(Mat framef, Mat frame, std::clock_t start, Mat score, Mat tempsbin[]){
+    int counter; //teller voor aantal gevonden cijfer matches
+    int gloc[LENGTE] = {}; //locatie van het maximum binnen elke cijfermatch(rect)
+    int cijfers[LENGTE] = {}; //gevonden cijfers
+    double duration; //tijd voorbij
+    double snelheid; //punten/sec
+    double gval[LENGTE] = {}; //waarde van elke geaccepteerde cijfermatch
+    Mat img;
+    Mat onlycheckbin = Mat::zeros(Size(score.cols, score.rows), CV_32FC1);
+    Mat result; //resultaat van template matching van de scoreregio
+    Mat results[10]; //resultaten van de templatematching van cijfers
+    Point pa[LENGTE] = {}; //locatie van elke cijfermatch in heel de frame
     memset(cijfers, 0, sizeof(cijfers));
     memset(gval, 0, sizeof(gval));
     memset(gloc, 0, sizeof(gloc));
     memset(pa, 0, sizeof(pa));
-    Mat img;
-    Mat onlycheckbin = Mat::zeros(Size(score.cols, score.rows), CV_32FC1);
     if(fc == 0){
         img = framef.clone();
         double maxv, minv;
         Point minLoc; Point maxLoc;
         Mat result;
         matchTemplate(framef, score, result, CV_TM_CCOEFF);
-        normalize( result, result, 0, 1, NORM_MINMAX, -1, Mat() );
+        normalize(result, result, 0, 1, NORM_MINMAX, -1, Mat() );
         minMaxLoc(result, &minv, &maxv, &minLoc,&maxLoc,Mat());
         matchLoc = maxLoc;
     }
@@ -217,17 +216,17 @@ void detectscore(Mat framef, Mat frame){
             }
         }
         for(int r=0;r<LENGTE;r++){
-                rectangle(frame, pa[r], Point(pa[r].x + temps[0].cols, pa[r].y + temps[0].rows), Scalar(0,0,255));
+                rectangle(frame, pa[r], Point(pa[r].x + tempsbin[0].cols, pa[r].y + tempsbin[0].rows), Scalar(0,0,255));
         }
     }
-    sorter();
-    int i, score = 0;
+    sorter(gloc, cijfers);
+    int i, scoregetal = 0;
     for (i = 0; i < LENGTE; i++)
-        score = 10 * score + cijfers[i];
+        scoregetal = 10 * scoregetal + cijfers[i];
     if(fc%5==0){
         totaalv(Rect(0,0,500,50)) = Scalar(0,0,0);
         duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        snelheid = (double)score/duration;
+        snelheid = (double)scoregetal/duration;
         string snelheids(to_string(snelheid));
         putText(totaalv, snelheids + " punten/s", Point(50,40),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
         imshow("statistieken",totaalv);
@@ -236,11 +235,13 @@ void detectscore(Mat framef, Mat frame){
         drawgraph(60,(double)snelheid,30);
     }
 }
-void detectaliens(Mat frame){
+void detectaliens(Mat frame, Mat aliens[]){
+    int tellers[SOORTEN] = {}; //teller per soort alien
+    int totaal; //alle aliens samengeteld
     totaal = 0;
     memset(tellers, 0, sizeof(tellers));
-    memset(pa, 0, sizeof(pa));
     Mat img;
+    Mat resultsa[3]; //resultaten van templatematching van aliens
     Point minLoc; Point maxLoc;
     img = frame.clone();
     minLoc = {};
@@ -279,9 +280,9 @@ void detectaliens(Mat frame){
     putText(totaalv, totaall + " over", Point(620,90),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
     imshow("statistieken",totaalv);
 }
-void detectshield(Mat frame){
+void detectshield(Mat frame, Mat schild){
     Mat img;
-    schildpixels = 0;
+    int schildpixels = 0; //aantal pixels groene tinten(schild)
     img = frame.clone();
     if(fc==0){
         double maxv, minv;
@@ -323,7 +324,7 @@ void detectshield(Mat frame){
         drawgraph(1180,(double)percentage,6);
     }
 }
-void sorter(){
+void sorter(int gloc[], int cijfers[]){
     int temploc;
     int tempc;
     for(int i = 0; i<LENGTE-1;i++){
@@ -340,11 +341,11 @@ void sorter(){
     }
 }
 void drawgraph(int offset, double f, int scalef){
+    Point puntnu;//huidig punt (bij elke statistiek geupdate
     if(fc==0){
         puntprev[offset/590] = Point(offset,700);
     }
     if(3*fc/30-xvar[offset/590]*250>=480){
-        cout << xvar[offset/590] << endl;
         totaalv(Rect(offset,100,250,600)) = Scalar(0,0,0);
         totaalv(Rect(offset+250,100,250,600)).copyTo(totaalv(Rect(offset,100,250,600)));
         totaalv(Rect(offset+250,100,250,600))=Scalar(0,0,0);
