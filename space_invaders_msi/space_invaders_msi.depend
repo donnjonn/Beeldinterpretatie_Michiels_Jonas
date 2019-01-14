@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1547495377 source:c:\users\jonas\documents\beeldverwerking\space_invaders_msi\main.cpp
+	"opencv2/objdetect.hpp"
+	"opencv2/highgui.hpp"
+	"opencv2/imgproc.hpp"
+	<cstdio>
+	<ctime>
+	<iostream>
+
