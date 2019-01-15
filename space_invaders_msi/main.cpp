@@ -84,20 +84,33 @@ int main(int argc, const char** argv){
     ///Initialiseren van assen en waardes voor grafieken
     line(totaalv,Point(60,700),Point(60,100),Scalar(0,255,0),2);
     putText(totaalv, "5", Point(5,565),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(60,565),Point(560,565), Scalar(0,255,0),1);
     putText(totaalv, "10", Point(5,415),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(60,415),Point(560,415), Scalar(0,255,0),1);
     putText(totaalv, "15", Point(5,265),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(60,265),Point(560,265), Scalar(0,255,0),1);
     putText(totaalv, "20", Point(5,115),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(60,565),Point(560,565), Scalar(0,255,0),1);
     line(totaalv,Point(620,700),Point(620,100),Scalar(0,255,0),2);
     putText(totaalv, "10", Point(565,615),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(620,615),Point(1120,615), Scalar(0,255,0),1);
     putText(totaalv, "20", Point(565,515),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(620,515),Point(1120,515), Scalar(0,255,0),1);
     putText(totaalv, "30", Point(565,415),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(620,415),Point(1120,415), Scalar(0,255,0),1);
     putText(totaalv, "40", Point(565,315),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(620,315),Point(1120,315), Scalar(0,255,0),1);
     putText(totaalv, "50", Point(565,215),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(620,215),Point(1120,215), Scalar(0,255,0),1);
     line(totaalv,Point(1178,700),Point(1178,100),Scalar(0,255,0),2);
     putText(totaalv, "20%", Point(1125,595),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(1178,595),Point(1678,595), Scalar(0,255,0),1);
     putText(totaalv, "40%", Point(1125,475),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(1178,475),Point(1678,475), Scalar(0,255,0),1);
     putText(totaalv, "60%", Point(1125,355),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(1178,355),Point(1678,355), Scalar(0,255,0),1);
     putText(totaalv, "80%", Point(1125,235),  FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,255),1,LINE_8,false );
+    line(totaalv,Point(1178,235),Point(1678,235), Scalar(0,255,0),1);
 
     ///Begin inlezen video
     std::clock_t start = std::clock();
